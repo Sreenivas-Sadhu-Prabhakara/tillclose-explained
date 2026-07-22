@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --bg: #2B152F; --surface: #3D2140; --line: #593459;
+    --ink: #F3E9F2; --muted: #C7A9C6; --gold: #D8AC5E; --gold2: #E7C583; --short: #E58AA0;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    position: relative; font-family: var(--sans); color: var(--ink);
+    background:
+      radial-gradient(1100px 600px at 84% -10%, rgba(216,172,94,0.16), transparent 60%),
+      radial-gradient(820px 480px at 4% 6%, rgba(216,172,94,0.07), transparent 55%),
+      linear-gradient(180deg, #24112a 0%, #2B152F 100%);
+    -webkit-font-smoothing: antialiased;
+  }
+  .frame { position: absolute; inset: 0; padding: 72px 84px; display: flex; flex-direction: column; justify-content: space-between; }
+
+  .brand { display: flex; align-items: center; gap: 20px; }
+  .brand svg { width: 62px; height: 62px; }
+  .wordmark { font-size: 54px; font-weight: 800; letter-spacing: -0.035em; }
+  .tag {
+    font-size: 22px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--gold); border: 2px solid var(--gold); border-radius: 8px; padding: 6px 14px; margin-left: 4px;
+  }
+
+  .mid { display: flex; align-items: center; gap: 56px; }
+  .copy { max-width: 560px; }
+  .copy .kicker { font-size: 22px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
+  .copy h1 { font-size: 52px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.08; }
+  .copy .accent { color: var(--gold); }
+
+  /* the well with coins mid-drop + a counted readout */
+  .well { position: relative; width: 400px; height: 300px; flex: 0 0 auto; }
+  .well svg { width: 400px; height: 300px; }
+  .stamp {
+    position: absolute; right: -10px; top: -14px;
+    font-size: 26px; font-weight: 800; letter-spacing: 0.14em; color: var(--short);
+    border: 3px solid var(--short); border-radius: 10px; padding: 8px 16px;
+    transform: rotate(-9deg); background: rgba(43,21,47,0.5);
+  }
+  .total {
+    position: absolute; left: 24px; bottom: 4px;
+    font-size: 32px; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums;
+  }
+
+  .chips { display: flex; gap: 12px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 10px; padding: 11px 19px;
+    border: 1px solid var(--line); border-radius: 999px; background: rgba(20,10,22,0.4);
+    font-size: 21px; font-weight: 600; color: var(--muted);
+  }
+  .chip .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px rgba(216,172,94,0.16); }
+</style>
+</head>
+<body>
+  <div class="frame">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="7" fill="#3D2140"/>
+        <rect x="5" y="10" width="22" height="14" rx="2.5" fill="none" stroke="#D8AC5E" stroke-width="1.8"/>
+        <line x1="13" y1="10" x2="13" y2="24" stroke="#D8AC5E" stroke-width="1.3"/>
+        <line x1="21" y1="10" x2="21" y2="24" stroke="#D8AC5E" stroke-width="1.3"/>
+        <ellipse cx="17" cy="16.5" rx="2.4" ry="1.2" fill="#D8AC5E"/>
+        <ellipse cx="17" cy="19" rx="2.4" ry="1.2" fill="#D8AC5E"/>
+        <ellipse cx="17" cy="21.5" rx="2.4" ry="1.2" fill="#D8AC5E"/>
+      </svg>
+      <span class="wordmark">tillclose</span>
+      <span class="tag">explained</span>
+    </div>
+
+    <div class="mid">
+      <div class="copy">
+        <p class="kicker">How the till-closing app works</p>
+        <h1>Count the drawer, catch the shortage, <span class="accent">close the day.</span></h1>
+      </div>
+
+      <div class="well">
+        <svg viewBox="0 0 400 300" aria-hidden="true">
+          <!-- one large open drawer well -->
+          <rect x="20" y="70" width="360" height="200" rx="18" fill="#3D2140" stroke="#D8AC5E" stroke-width="4"/>
+          <line x1="200" y1="70" x2="200" y2="270" stroke="#593459" stroke-width="3"/>
+          <!-- coins mid-drop, left well -->
+          <ellipse cx="110" cy="18" rx="52" ry="17" fill="#E7C583" opacity="0.55"/>
+          <ellipse cx="110" cy="185" rx="52" ry="18" fill="#D8AC5E"/>
+          <ellipse cx="110" cy="207" rx="52" ry="18" fill="#D8AC5E"/>
+          <ellipse cx="110" cy="229" rx="52" ry="18" fill="#E7C583"/>
+          <!-- note bundle, right well -->
+          <rect x="235" y="100" width="120" height="72" rx="8" fill="#D8AC5E" opacity="0.5"/>
+          <rect x="248" y="114" width="120" height="72" rx="8" fill="#D8AC5E"/>
+          <ellipse cx="298" cy="222" rx="52" ry="17" fill="#D8AC5E"/>
+          <ellipse cx="298" cy="240" rx="52" ry="17" fill="#E7C583"/>
+        </svg>
+        <span class="stamp">SHORT</span>
+        <span class="total">₹2,169.00</span>
+      </div>
+    </div>
+
+    <div class="chips">
+      <span class="chip"><span class="dot"></span>count · reconcile · log</span>
+      <span class="chip"><span class="dot"></span>connect-src 'none'</span>
+      <span class="chip"><span class="dot"></span>works fully offline</span>
+    </div>
+  </div>
+</body>
+</html>

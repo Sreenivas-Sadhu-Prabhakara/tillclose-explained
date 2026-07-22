@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'">
+  <title>How a Till-Closing App Works — Count the Drawer &amp; Reconcile Cash Privately</title>
+  <meta name="description" content="An animated walk-through of how to close a cash till: count the drawer by denomination, reconcile against expected cash, and see which days were short — all offline, with figures the browser physically cannot send anywhere.">
+  <meta name="color-scheme" content="dark light">
+  <link rel="canonical" href="https://sreenivas-sadhu-prabhakara.github.io/tillclose-explained/">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="author" content="Sreenivas Sadhu Prabhakara">
+  <meta name="keywords" content="how a till closing app works, cash drawer counting explained, cash reconciliation, end of day cash count, denomination counting, offline cash counter, private till log, expected cash variance, cash short or over">
+  <meta name="theme-color" content="#2B152F" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F4EEF3" media="(prefers-color-scheme: light)">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="tillclose explained">
+  <meta property="og:title" content="How a Till-Closing App Works — Count the Drawer &amp; Reconcile Cash Privately">
+  <meta property="og:description" content="An animated walk-through of counting a cash drawer, reconciling against expected cash, and spotting short days — all offline, with figures the browser cannot send anywhere.">
+  <meta property="og:url" content="https://sreenivas-sadhu-prabhakara.github.io/tillclose-explained/">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image" content="https://sreenivas-sadhu-prabhakara.github.io/tillclose-explained/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="An animated explainer for tillclose — coins dropping into a cash-drawer well, resolving to a counted total and a SHORT stamp on aubergine">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="How a Till-Closing App Works — Count the Drawer &amp; Reconcile Cash Privately">
+  <meta name="twitter:description" content="An animated walk-through of counting a cash drawer, reconciling against expected cash, and spotting short days — all offline and private by construction.">
+  <meta name="twitter:image" content="https://sreenivas-sadhu-prabhakara.github.io/tillclose-explained/og-image.png">
+  <meta name="twitter:image:alt" content="An animated explainer for tillclose — a cash-drawer well, a counted total, and a SHORT stamp">
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Structured data (data block; survives the CSP) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "tillclose explained",
+    "description": "An animated single-page explainer for tillclose, a cash denomination calculator and daily till-closing log. Shows how counting the drawer, reconciling against expected cash, and logging closings works, and why it stays fully private and offline.",
+    "url": "https://sreenivas-sadhu-prabhakara.github.io/tillclose-explained/",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Any (modern web browser)",
+    "browserRequirements": "Requires a modern web browser with JavaScript enabled.",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "license": "https://opensource.org/licenses/MIT",
+    "author": { "@type": "Person", "name": "Sreenivas Sadhu Prabhakara" },
+    "softwareVersion": "0.1.0",
+    "featureList": [
+      "Animated walk-through of counting a cash drawer by denomination",
+      "Shows expected-cash reconciliation: opening float + cash sales − payouts",
+      "Explains the SHORT / OVER / TALLIED variance verdict",
+      "Explains the enforced privacy guarantee (connect-src 'none')",
+      "Links to the live tillclose app"
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What does a till-closing app actually do?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "It does the three steps of closing a cash till: you count what is physically in the drawer by denomination, you enter what should be there (opening float plus cash sales minus payouts), and it shows the difference — TALLIED, SHORT, or OVER — then saves a dated closing so a pattern of short days becomes visible."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is expected cash worked out?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Expected cash = opening float + cash sales − payouts. Every one of those figures is typed in by you. The app cannot read your POS, bank, or UPI and never pretends to, so the variance is only as good as the numbers you enter."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is my cash data really private?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, and it is enforced rather than promised. A strict Content-Security-Policy sets connect-src to none, so the page itself cannot make any network request — the browser blocks every send. Your counts and closings live only in your own browser's local storage; export a CSV to keep a backup."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it work without internet?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Because there are no network dependencies at all, the app runs with no signal — useful at a stall, a counter, or a shift handover where connectivity is unreliable."
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#story">Skip to how it works</a>
+
+  <!-- ============ HEADER ============ -->
+  <header class="masthead" id="top">
+    <div class="masthead__inner">
+      <div class="brand">
+        <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="2" y="8" width="28" height="18" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <line x1="12" y1="8" x2="12" y2="26" stroke="currentColor" stroke-width="1.4"/>
+          <line x1="20" y1="8" x2="20" y2="26" stroke="currentColor" stroke-width="1.4"/>
+          <ellipse cx="16" cy="15" rx="3.1" ry="1.5" class="mk-coin"/>
+          <ellipse cx="16" cy="18" rx="3.1" ry="1.5" class="mk-coin"/>
+          <ellipse cx="16" cy="21" rx="3.1" ry="1.5" class="mk-coin"/>
+        </svg>
+        <span class="brand__word">tillclose <span class="brand__tag">explained</span></span>
+      </div>
+      <div class="masthead__tools">
+        <a class="btn btn--primary btn--sm" href="https://sreenivas-sadhu-prabhakara.github.io/tillclose/" id="topCta">Open the app</a>
+        <button type="button" class="btn btn--ghost btn--sm" id="themeToggle" aria-pressed="false">
+          <span class="btn__ico" aria-hidden="true">◑</span><span id="themeLabel">Theme</span>
+        </button>
+      </div>
+    </div>
+    <div class="scrollbar" aria-hidden="true"><div class="scrollbar__fill" id="scrollFill"></div></div>
+  </header>
+
+  <!-- ============ HERO / HOOK ============ -->
+  <section class="hero reveal" id="hero">
+    <div class="hero__inner">
+      <p class="eyebrow">A cash-drawer counting &amp; reconciliation tool · explained</p>
+      <h1 class="hero__title">How a Till-Closing App Works — Count the Drawer, Reconcile the Cash, Spot the Short Days</h1>
+      <p class="hero__lede">
+        Every shift ends the same way: someone counts the money. <strong>tillclose</strong> turns that
+        nightly ritual into three honest steps — count by denomination, reconcile against what the drawer
+        <em>should</em> hold, and log the result. Here is the whole idea, animated. Nothing you type ever
+        leaves the browser.
+      </p>
+      <div class="hero__cta">
+        <a class="btn btn--primary" href="https://sreenivas-sadhu-prabhakara.github.io/tillclose/">Open tillclose</a>
+        <a class="btn btn--ghost" href="#story">See how it works ↓</a>
+      </div>
+
+      <!-- animated drawer: coins drop into wells, total ticks up -->
+      <figure class="stage stage--hero" aria-hidden="true">
+        <div class="drawer" id="heroDrawer">
+          <div class="well">
+            <span class="well__face">₹500</span>
+            <div class="coins">
+              <span class="coin coin--note c1"></span>
+              <span class="coin coin--note c2"></span>
+              <span class="coin coin--note c3"></span>
+            </div>
+          </div>
+          <div class="well">
+            <span class="well__face">₹100</span>
+            <div class="coins">
+              <span class="coin coin--note c1"></span>
+              <span class="coin coin--note c2"></span>
+            </div>
+          </div>
+          <div class="well">
+            <span class="well__face">₹10</span>
+            <div class="coins">
+              <span class="coin c1"></span><span class="coin c2"></span><span class="coin c3"></span>
+            </div>
+          </div>
+          <div class="well">
+            <span class="well__face">₹5</span>
+            <div class="coins">
+              <span class="coin c1"></span><span class="coin c2"></span>
+            </div>
+          </div>
+        </div>
+        <div class="ticker">
+          <span class="ticker__label">Counted</span>
+          <span class="ticker__value" id="heroTotal" data-target="216900">₹0.00</span>
+        </div>
+      </figure>
+      <p class="stage__caption">The drawer counts itself as you drop each denomination in.</p>
+    </div>
+  </section>
+
+  <main id="story">
+
+    <!-- ============ 1. THE PROBLEM ============ -->
+    <section class="chapter reveal" id="problem" aria-labelledby="problemHeading">
+      <div class="chapter__inner">
+        <p class="chapter__num">01 — The problem</p>
+        <h2 class="chapter__title" id="problemHeading">Counting cash on paper is where the day goes wrong</h2>
+        <p class="chapter__body">
+          Kirana stores, food stalls, salons, pharmacies, petrol-pump shift handovers, event volunteers —
+          anyone who closes a drawer knows the three ways it breaks. The denomination arithmetic is
+          error-prone by hand. A spreadsheet has no running record of <em>which</em> days ran short. And a
+          generic web counter wants an account, or quietly phones your numbers home.
+        </p>
+        <div class="painrow">
+          <div class="pain">
+            <span class="pain__ico" aria-hidden="true">✎</span>
+            <h3 class="pain__h">Paper slips</h3>
+            <p>3 × ₹500 + 7 × ₹100 in your head, at 11pm, tired. One slip and the till is "short".</p>
+          </div>
+          <div class="pain">
+            <span class="pain__ico" aria-hidden="true">▦</span>
+            <h3 class="pain__h">Spreadsheets</h3>
+            <p>They add up today, but nobody scrolls back to see the pattern of shortages building.</p>
+          </div>
+          <div class="pain">
+            <span class="pain__ico" aria-hidden="true">☁</span>
+            <h3 class="pain__h">Cloud counters</h3>
+            <p>Sign up, log in, and your daily takings sit on someone else's server. For a cash count.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2. STEP ONE — COUNT ============ -->
+    <section class="chapter chapter--split reveal" id="count" aria-labelledby="countHeading">
+      <div class="chapter__inner split">
+        <div class="split__copy">
+          <p class="chapter__num">02 — Step one</p>
+          <h2 class="chapter__title" id="countHeading">Count the drawer by denomination</h2>
+          <p class="chapter__body">
+            The grid <em>is</em> the drawer, seen from above: one well per note and coin. Tap the steppers
+            or type a quantity, and each well shows its own subtotal while a grand total runs live at the
+            bottom. Five verified currency presets — INR, USD, EUR, GBP, PHP — plus a free "other amount"
+            row for a withdrawn ₹2000 note or a commemorative coin.
+          </p>
+          <p class="chapter__body chapter__body--note">
+            Every rupee is computed in <strong>integer paise</strong> — never floating-point — so a
+            decimal-currency count can't drift by a rounding cent.
+          </p>
+        </div>
+        <figure class="stage split__stage" aria-hidden="true">
+          <div class="countgrid" id="countGrid">
+            <div class="cwell"><span class="cwell__face">₹500</span><span class="cwell__qty" data-q="3">×3</span><span class="cwell__sub">₹1,500</span></div>
+            <div class="cwell"><span class="cwell__face">₹200</span><span class="cwell__qty" data-q="1">×1</span><span class="cwell__sub">₹200</span></div>
+            <div class="cwell"><span class="cwell__face">₹100</span><span class="cwell__qty" data-q="4">×4</span><span class="cwell__sub">₹400</span></div>
+            <div class="cwell"><span class="cwell__face">₹50</span><span class="cwell__qty" data-q="1">×1</span><span class="cwell__sub">₹50</span></div>
+            <div class="cwell"><span class="cwell__face">₹20</span><span class="cwell__qty" data-q="2">×2</span><span class="cwell__sub">₹40</span></div>
+            <div class="cwell"><span class="cwell__face">₹10</span><span class="cwell__qty" data-q="1">×1</span><span class="cwell__sub">₹10</span></div>
+            <div class="cwell cwell--coin"><span class="cwell__face">₹5</span><span class="cwell__qty" data-q="3">×3</span><span class="cwell__sub">₹15</span></div>
+            <div class="cwell cwell--coin"><span class="cwell__face">₹2</span><span class="cwell__qty" data-q="1">×1</span><span class="cwell__sub">₹2</span></div>
+          </div>
+          <div class="ticker ticker--inline">
+            <span class="ticker__label">Counted total</span>
+            <span class="ticker__value" id="countGridTotal" data-target="221700">₹0.00</span>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============ 3. STEP TWO — RECONCILE ============ -->
+    <section class="chapter chapter--split reveal reverse" id="reconcile" aria-labelledby="reconHeading">
+      <div class="chapter__inner split split--reverse">
+        <div class="split__copy">
+          <p class="chapter__num">03 — Step two</p>
+          <h2 class="chapter__title" id="reconHeading">Reconcile against what the drawer <em>should</em> hold</h2>
+          <p class="chapter__body">
+            The expected total is simple and honest arithmetic you enter yourself:
+          </p>
+          <p class="formula" aria-hidden="true">
+            <span class="formula__t">opening float</span>
+            <span class="formula__op">+</span>
+            <span class="formula__t">cash sales</span>
+            <span class="formula__op">−</span>
+            <span class="formula__t formula__t--out">payouts</span>
+            <span class="formula__op">=</span>
+            <span class="formula__t formula__t--res">expected</span>
+          </p>
+          <p class="chapter__body chapter__body--note">
+            Payouts are a small labelled list — "milk vendor ₹350", "auto fare ₹80". The app can't read
+            your POS, bank, or UPI, and <strong>never pretends to</strong>. The variance is only ever as
+            good as the numbers you type.
+          </p>
+        </div>
+        <figure class="stage split__stage" aria-hidden="true">
+          <div class="ledger" id="ledger">
+            <div class="ledger__row"><span>Opening float</span><span class="tabnum">₹5,000.00</span></div>
+            <div class="ledger__row"><span>+ Cash sales</span><span class="tabnum">₹12,750.00</span></div>
+            <div class="ledger__row ledger__row--out"><span>− Milk vendor</span><span class="tabnum">−₹350.00</span></div>
+            <div class="ledger__row ledger__row--out"><span>− Auto fare</span><span class="tabnum">−₹80.00</span></div>
+            <div class="ledger__row ledger__row--total"><span>Expected total</span><span class="tabnum" id="expectedRun" data-target="1732000">₹0.00</span></div>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============ 4. THE VERDICT (the stamp motif) ============ -->
+    <section class="chapter reveal" id="verdict" aria-labelledby="verdictHeading">
+      <div class="chapter__inner">
+        <p class="chapter__num">04 — The verdict</p>
+        <h2 class="chapter__title" id="verdictHeading">Counted minus expected — tallied, short, or over</h2>
+        <p class="chapter__body chapter__body--center">
+          One subtraction gives the whole answer, stamped in words and colour so the state is never
+          colour-only. Here the drawer is a little light.
+        </p>
+        <figure class="stage stage--verdict" aria-hidden="true">
+          <div class="vsum">
+            <div class="vsum__line"><span class="vsum__lab">Counted</span><span class="tabnum">₹2,169.00</span></div>
+            <div class="vsum__line"><span class="vsum__lab">Expected</span><span class="tabnum">₹2,200.00</span></div>
+          </div>
+          <div class="verdict-band" id="verdictBand" data-status="short">
+            <span class="verdict-band__stamp" id="verdictStamp">SHORT</span>
+            <span class="verdict-band__amt tabnum" id="verdictAmt">−₹31.00</span>
+            <span class="verdict-band__words" id="verdictWords">The drawer is short by thirty-one rupees.</span>
+          </div>
+          <div class="chiprow">
+            <button type="button" class="miniChip is-on" data-status="short">SHORT</button>
+            <button type="button" class="miniChip" data-status="tallied">TALLIED</button>
+            <button type="button" class="miniChip" data-status="over">OVER</button>
+          </div>
+        </figure>
+        <p class="stage__caption">Tap a state to see how the same band reads for each verdict.</p>
+      </div>
+    </section>
+
+    <!-- ============ 5. THE HISTORY ============ -->
+    <section class="chapter reveal" id="history" aria-labelledby="histHeading">
+      <div class="chapter__inner">
+        <p class="chapter__num">05 — The record</p>
+        <h2 class="chapter__title" id="histHeading">A dated log makes the pattern visible</h2>
+        <p class="chapter__body chapter__body--center">
+          Save one closing per date and the history strip does the rest — days closed, how many were short,
+          the net variance, and the worst day highlighted. A slow leak nobody noticed on paper shows up here
+          on the first read.
+        </p>
+        <figure class="stage stage--history" aria-hidden="true">
+          <div class="hstrip">
+            <span class="hstat"><b>18</b> days closed</span>
+            <span class="hstat hstat--short"><b>4</b> short</span>
+            <span class="hstat hstat--over"><b>1</b> over</span>
+            <span class="hstat hstat--tally"><b>13</b> tallied</span>
+            <span class="hstat">net <b class="tabnum">−₹412.00</b></span>
+          </div>
+          <ul class="hlist">
+            <li class="hrow"><span class="hrow__date tabnum">2026-07-21</span><span class="hrow__meta">handover · evening</span><span class="hrow__var hrow__var--tally tabnum">TALLIED</span></li>
+            <li class="hrow hrow--worst"><span class="hrow__date tabnum">2026-07-20</span><span class="hrow__meta">worst day</span><span class="hrow__var hrow__var--short tabnum">−₹210.00</span></li>
+            <li class="hrow"><span class="hrow__date tabnum">2026-07-19</span><span class="hrow__meta">—</span><span class="hrow__var hrow__var--over tabnum">+₹40.00</span></li>
+            <li class="hrow"><span class="hrow__date tabnum">2026-07-18</span><span class="hrow__meta">—</span><span class="hrow__var hrow__var--tally tabnum">TALLIED</span></li>
+          </ul>
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============ 6. THE PRIVACY GUARANTEE ============ -->
+    <section class="chapter chapter--privacy reveal" id="privacy" aria-labelledby="privHeading">
+      <div class="chapter__inner">
+        <p class="chapter__num">06 — The guarantee</p>
+        <h2 class="chapter__title" id="privHeading">Privacy the browser enforces, not a promise it makes</h2>
+        <p class="chapter__body chapter__body--center">
+          Most apps <em>say</em> "we don't sell your data". tillclose ships a single line that makes it
+          impossible to send anything at all — a Content-Security-Policy with <code>connect-src 'none'</code>.
+          The browser refuses every network call the page could try to make.
+        </p>
+        <figure class="stage stage--privacy" aria-hidden="true">
+          <div class="cspwall">
+            <code class="cspwall__code">connect-src 'none'</code>
+            <div class="cspwall__gate">
+              <span class="packet p1"></span>
+              <span class="packet p2"></span>
+              <span class="packet p3"></span>
+              <span class="wall"></span>
+              <span class="cspwall__x">✕ blocked</span>
+            </div>
+          </div>
+        </figure>
+        <ul class="guaranteelist">
+          <li><span class="gl__k">No network, ever.</span> No fetch, no analytics, no cloud sync — the policy blocks it, so it can't happen by accident either.</li>
+          <li><span class="gl__k">No accounts.</span> Nothing to sign up for. Your counts and closings live only in this browser's local storage.</li>
+          <li><span class="gl__k">Works with no signal.</span> With zero network dependencies it runs at a stall, a basement counter, a power cut.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ 7. FEATURE TOUR ============ -->
+    <section class="chapter reveal" id="tour" aria-labelledby="tourHeading">
+      <div class="chapter__inner">
+        <p class="chapter__num">07 — At a glance</p>
+        <h2 class="chapter__title" id="tourHeading">Everything tillclose does — and nothing it doesn't</h2>
+        <div class="feats">
+          <div class="feat"><h3>Denomination grid</h3><p>5 verified currency presets as drawer wells with steppers, live subtotals, and a running total in integer minor units.</p></div>
+          <div class="feat"><h3>Expected-cash panel</h3><p>Opening float + cash sales − a labelled payouts list. Every figure hand-entered — no fake POS import.</p></div>
+          <div class="feat"><h3>Variance verdict</h3><p>TALLIED / SHORT / OVER to the paise, in words and colour, never colour alone.</p></div>
+          <div class="feat"><h3>Dated history</h3><p>One closing per date, a summary strip, and the worst day flagged so shortages surface.</p></div>
+          <div class="feat"><h3>Printable sheet</h3><p>A clean close sheet with "Counted by / Verified by" sign-off lines for the physical till file.</p></div>
+          <div class="feat"><h3>CSV export</h3><p>RFC-4180 history for the accountant, plus a per-day denomination breakdown. Your only backup.</p></div>
+          <div class="feat"><h3>Float carry-forward</h3><p>One tap prefills today's opening float from the last saved closing.</p></div>
+          <div class="feat"><h3>Light &amp; dark</h3><p>Both WCAG-AA legible, system-preference aware, with a manual toggle.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 8. CTA ============ -->
+    <section class="cta reveal" id="cta" aria-labelledby="ctaHeading">
+      <div class="cta__inner">
+        <svg class="cta__mark" viewBox="0 0 100 100" aria-hidden="true">
+          <rect x="16" y="28" width="68" height="46" rx="8" fill="var(--surface)" stroke="var(--gold)" stroke-width="3.4"/>
+          <line x1="50" y1="28" x2="50" y2="74" stroke="var(--gold)" stroke-width="2.4" opacity="0.85"/>
+          <ellipse cx="67" cy="46" rx="11" ry="4.4" fill="var(--gold)"/>
+          <ellipse cx="67" cy="52" rx="11" ry="4.4" fill="var(--gold)"/>
+          <ellipse cx="67" cy="58" rx="11" ry="4.4" fill="var(--gold)"/>
+          <ellipse cx="67" cy="64" rx="11" ry="4.4" fill="#E7C583"/>
+          <rect x="24" y="44" width="20" height="22" rx="2.5" fill="var(--gold)" opacity="0.55"/>
+          <rect x="27" y="48" width="20" height="22" rx="2.5" fill="var(--gold)"/>
+        </svg>
+        <h2 class="cta__title" id="ctaHeading">Close today's till in your own browser</h2>
+        <p class="cta__body">
+          Free, open source, and offline. No install, no account, no network — just open it and count.
+        </p>
+        <a class="btn btn--primary btn--lg" href="https://sreenivas-sadhu-prabhakara.github.io/tillclose/">Open tillclose →</a>
+        <p class="cta__sub">Runs 100% offline · figures never leave the browser · MIT licensed</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="foot">
+    <div class="foot__inner">
+      <p class="foot__disclaimer">
+        <strong>This is an explainer page for the tillclose app.</strong> tillclose is a counting and
+        reconciliation aid — <em>not an accounting system and not financial, tax, audit, or legal advice.</em>
+        Variance is arithmetic, not fraud detection; a tallied drawer does not prove correct sales recording.
+        Expected cash is only as accurate as the figures you enter. Currency and figures shown here are
+        illustrative examples. Keep your statutory books separately.
+      </p>
+      <p class="foot__meta">
+        <a href="https://sreenivas-sadhu-prabhakara.github.io/tillclose/" class="foot__link">Open the app</a>
+        <span class="foot__dot">·</span>
+        <span>Works 100% offline</span><span class="foot__dot">·</span>
+        <span>No network, no accounts</span><span class="foot__dot">·</span>
+        <span>MIT License</span><span class="foot__dot">·</span>
+        <span>© 2026 Sreenivas&nbsp;Sadhu&nbsp;Prabhakara</span>
+      </p>
+    </div>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
